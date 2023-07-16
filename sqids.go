@@ -46,6 +46,7 @@ func NewSqids(options Options) (*Sqids, error) {
 	alphabet := options.Alphabet
 	minLength := options.MinLength
 	blocklist := options.Blocklist
+
 	if blocklist == nil {
 		b := Blocklist()
 		blocklist = &b
@@ -252,10 +253,14 @@ func toID(num uint64, alphabet string) string {
 	chars := strings.Split(alphabet, "")
 
 	result := num
-	for result > 0 {
+	for {
 		index := result % uint64(len(chars))
 		id = append([]string{chars[index]}, id...)
 		result = result / uint64(len(chars))
+
+		if result == 0 {
+			break
+		}
 	}
 
 	return strings.Join(id, "")
@@ -287,11 +292,11 @@ func intersection(slice1, slice2 []string) []string {
 	intersect := []string{}
 	set := make(map[string]bool)
 
-	for _, s := range slice1 {
+	for _, s := range slice2 {
 		set[s] = true
 	}
 
-	for _, s := range slice2 {
+	for _, s := range slice1 {
 		if set[s] {
 			intersect = append(intersect, s)
 		}

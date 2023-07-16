@@ -6,18 +6,19 @@ import (
 )
 
 func TestEncodeDecode(t *testing.T) {
-	numbers := []uint64{}
+	numbers := []uint64{1, 2, 3}
 
-	sqids, _ := New()
+	sqids, err := New()
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	id, err := sqids.Encode(numbers)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	decoded, err := sqids.Decode(id)
-	if err != nil {
-		t.Fatal(err)
-	}
+	decoded := sqids.Decode(id)
 
 	if !reflect.DeepEqual(numbers, decoded) {
 		t.Errorf("Could not encode/decode `%v`", numbers)

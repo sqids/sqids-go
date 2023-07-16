@@ -8,7 +8,7 @@ Sqids (pronounced "squids") is a small library that lets you generate YouTube-lo
 
 Use go get.
 
-```golang
+```bash
 go get github.com/sqids/sqids-go
 ```
 

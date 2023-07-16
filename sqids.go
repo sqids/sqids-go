@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"regexp"
 	"strings"
 )
 
@@ -42,12 +43,6 @@ func NewCustom(alphabet string, minLength int) (*Sqids, error) {
 
 // NewSqids -
 func NewSqids(options Options) (*Sqids, error) {
-	blank := Sqids{
-		alphabet:  "",
-		minLength: 0,
-		blocklist: []string{},
-	}
-
 	alphabet := options.Alphabet
 	minLength := options.MinLength
 	blocklist := options.Blocklist
@@ -67,8 +62,8 @@ func NewSqids(options Options) (*Sqids, error) {
 	}
 
 	// test min length (type [might be lang-specific] + min length + max length)
-	if minLength < int(blank.MinValue()) || minLength > len(alphabet) {
-		return nil, fmt.Errorf("minimum length has to be between %d and %d", blank.MinValue(), len(alphabet))
+	if minLength < int(MinValue()) || minLength > len(alphabet) {
+		return nil, fmt.Errorf("minimum length has to be between %d and %d", MinValue(), len(alphabet))
 	}
 
 	// clean up blocklist:
@@ -103,13 +98,13 @@ func (s *Sqids) Encode(numbers []uint64) (string, error) {
 
 	inRangeNumbers := []uint64{}
 	for _, n := range numbers {
-		if n >= s.MinValue() && n <= s.MaxValue() {
+		if n >= MinValue() && n <= MaxValue() {
 			inRangeNumbers = append(inRangeNumbers, n)
 		}
 	}
 
 	if len(inRangeNumbers) != len(numbers) {
-		return "", fmt.Errorf("encoding supports numbers between %d and %d", s.MinValue(), s.MaxValue())
+		return "", fmt.Errorf("encoding supports numbers between %d and %d", MinValue(), MaxValue())
 	}
 
 	return s.encodeNumbers(inRangeNumbers, false)
@@ -166,7 +161,7 @@ func (s *Sqids) encodeNumbers(numbers []uint64, partitioned bool) (string, error
 
 	if s.isBlockedID(id) {
 		if partitioned {
-			if numbers[0]+1 > s.MaxValue() {
+			if numbers[0]+1 > MaxValue() {
 				return "", errors.New("ran out of range checking against the blocklist")
 			}
 
@@ -232,12 +227,12 @@ func (s *Sqids) Decode(id string) []uint64 {
 }
 
 // MinValue -
-func (s *Sqids) MinValue() uint64 {
+func MinValue() uint64 {
 	return 0
 }
 
 // MaxValue -
-func (s *Sqids) MaxValue() uint64 {
+func MaxValue() uint64 {
 	return math.MaxUint64
 }
 
@@ -316,6 +311,7 @@ func contains(slice []string, str string) bool {
 
 func (s *Sqids) isBlockedID(id string) bool {
 	id = strings.ToLower(id)
+	r := regexp.MustCompile(`\d`)
 
 	for _, word := range s.blocklist {
 		if len(word) <= len(id) {
@@ -323,7 +319,11 @@ func (s *Sqids) isBlockedID(id string) bool {
 				if id == word {
 					return true
 				}
-			} else if strings.Contains(id, word) || strings.HasPrefix(id, word) || strings.HasSuffix(id, word) {
+			} else if r.MatchString(word) {
+				if strings.HasPrefix(id, word) || strings.HasSuffix(id, word) {
+					return true
+				}
+			} else if strings.Contains(id, word) {
 				return true
 			}
 		}

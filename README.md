@@ -1,14 +1,57 @@
 # [Sqids Go](https://sqids.org/go)
 
+[![Github Actions](https://img.shields.io/github/actions/workflow/status/sqids/sqids-go/tests.yml)](https://github.com/sqids/sqids-go/actions)
+
 Sqids (pronounced "squids") is a small library that lets you generate YouTube-looking IDs from numbers. It's good for link shortening, fast & URL-safe ID generation and decoding back into numbers for quicker database lookups.
 
 ## Getting started
 
-@todo
+Use go get.
+
+```golang
+go get github.com/sqids/sqids-go
+```
+
+Then import the package into your own code.
+
+```golang
+import "github.com/sqids/sqids-go"
+```
 
 ## Examples
 
-@todo
+Simple encode & decode:
+
+```golang
+s := sqids.New()
+id := s.encode([]uint64{1, 2, 3}) // "8QRLaD"
+numbers := s.decode(id) // [1, 2, 3]
+```
+
+Randomize IDs by providing a custom alphabet:
+
+```golang
+s := sqids.NewCustom("FxnXM1kBN6cuhsAvjW3Co7l2RePyY8DwaU04Tzt9fHQrqSVKdpimLGIJOgb5ZE", 0)
+id := s.encode([]uint64{1, 2, 3}) // "B5aMa3"
+numbers := s.decode(id) // [1, 2, 3]
+```
+
+Enforce a *minimum* length for IDs:
+
+```golang
+s := sqids.NewCustom("", 10)
+id := s.encode([]uint64{1, 2, 3}) // "75JT1cd0dL"
+numbers := s.decode(id) // [1, 2, 3]
+```
+
+Prevent specific words from appearing anywhere in the auto-generated IDs:
+
+```golang
+s := sqids.New()
+s.Blocklist = []string{"word1", "word2"}
+id := s.encode([]uint64{1, 2, 3}) // "8QRLaD"
+numbers := s.decode(id) // [1, 2, 3]
+```
 
 ## License
 

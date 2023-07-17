@@ -20,11 +20,13 @@ import "github.com/sqids/sqids-go"
 
 ## Examples
 
+> 🚧 Please note that the following examples omit proper error handling:
+
 Simple encode & decode:
 
 ```golang
-s, err := sqids.New()
-id := s.Encode([]uint64{1, 2, 3}) // "8QRLaD"
+s, _ := sqids.New()
+id, _ := s.Encode([]uint64{1, 2, 3}) // "8QRLaD"
 numbers := s.Decode(id) // [1, 2, 3]
 ```
 
@@ -32,10 +34,10 @@ Randomize IDs by providing a custom alphabet:
 
 ```golang
 alphabet := "FxnXM1kBN6cuhsAvjW3Co7l2RePyY8DwaU04Tzt9fHQrqSVKdpimLGIJOgb5ZE"
-s, err := sqids.NewCustom(sqids.Options{
+s, _ := sqids.NewCustom(sqids.Options{
     Alphabet: &alphabet,
 })
-id := s.Encode([]uint64{1, 2, 3}) // "B5aMa3"
+id, _ := s.Encode([]uint64{1, 2, 3}) // "B5aMa3"
 numbers := s.Decode(id) // [1, 2, 3]
 ```
 
@@ -43,20 +45,20 @@ Enforce a *minimum* length for IDs:
 
 ```golang
 minLength := 10
-s, err := sqids.NewCustom(sqids.Options{
+s, _ := sqids.NewCustom(sqids.Options{
     MinLength: &minLength,
 })
-id := s.Encode([]uint64{1, 2, 3}) // "75JT1cd0dL"
+id, _ := s.Encode([]uint64{1, 2, 3}) // "75JT1cd0dL"
 numbers := s.Decode(id) // [1, 2, 3]
 ```
 
 Prevent specific words from appearing anywhere in the auto-generated IDs:
 
 ```golang
-s, err := sqids.NewCustom(sqids.Options{
+s, _ := sqids.NewCustom(sqids.Options{
     Blocklist: &[]string{"word1", "word2"},
 })
-id := s.Encode([]uint64{1, 2, 3}) // "8QRLaD"
+id, _ := s.Encode([]uint64{1, 2, 3}) // "8QRLaD"
 numbers := s.Decode(id) // [1, 2, 3]
 ```
 

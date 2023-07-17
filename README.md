@@ -31,7 +31,12 @@ numbers := s.Decode(id) // [1, 2, 3]
 Randomize IDs by providing a custom alphabet:
 
 ```golang
-s, err := sqids.NewCustom("FxnXM1kBN6cuhsAvjW3Co7l2RePyY8DwaU04Tzt9fHQrqSVKdpimLGIJOgb5ZE", 0)
+alphabet := "FxnXM1kBN6cuhsAvjW3Co7l2RePyY8DwaU04Tzt9fHQrqSVKdpimLGIJOgb5ZE"
+s, err := sqids.NewCustom(sqids.Options{
+    Alphabet:  &alphabet,
+    MinLength: nil,
+    Blocklist: nil,
+})
 id := s.Encode([]uint64{1, 2, 3}) // "B5aMa3"
 numbers := s.Decode(id) // [1, 2, 3]
 ```
@@ -39,7 +44,12 @@ numbers := s.Decode(id) // [1, 2, 3]
 Enforce a *minimum* length for IDs:
 
 ```golang
-s, err := sqids.NewCustom("", 10)
+minLength := 10
+s, err := sqids.NewCustom(sqids.Options{
+    Alphabet:  nil,
+    MinLength: &minLength,
+    Blocklist: nil,
+})
 id := s.Encode([]uint64{1, 2, 3}) // "75JT1cd0dL"
 numbers := s.Decode(id) // [1, 2, 3]
 ```
@@ -47,10 +57,10 @@ numbers := s.Decode(id) // [1, 2, 3]
 Prevent specific words from appearing anywhere in the auto-generated IDs:
 
 ```golang
-s, err := sqids.NewSqids(sqids.Options{
-    Alphabet:  "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",
-    MinLength: 0,
-    Blocklist: &[]string{"word1", "word2"}
+s, err := sqids.NewCustom(sqids.Options{
+    Alphabet:  nil,
+    MinLength: nil,
+    Blocklist: &[]string{"word1", "word2"},
 })
 id := s.Encode([]uint64{1, 2, 3}) // "8QRLaD"
 numbers := s.Decode(id) // [1, 2, 3]

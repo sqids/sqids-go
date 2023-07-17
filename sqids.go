@@ -8,10 +8,21 @@ import (
 	"strings"
 )
 
+var (
+	// DefaultAlphabet -
+	DefaultAlphabet string = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+
+	// DefaultMinLength -
+	DefaultMinLength int = 0
+
+	// DefaultBlocklist -
+	DefaultBlocklist []string = Blocklist()
+)
+
 // Options -
 type Options struct {
-	Alphabet  string
-	MinLength int
+	Alphabet  *string
+	MinLength *int
 	Blocklist *[]string
 }
 
@@ -24,47 +35,43 @@ type Sqids struct {
 
 // New -
 func New() (*Sqids, error) {
-	defaultBlocklist := Blocklist()
-	return NewSqids(Options{
-		Alphabet:  "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",
-		MinLength: 0,
-		Blocklist: &defaultBlocklist,
+	return NewCustom(Options{
+		Alphabet:  &DefaultAlphabet,
+		MinLength: &DefaultMinLength,
+		Blocklist: &DefaultBlocklist,
 	})
 }
 
 // NewCustom -
-func NewCustom(alphabet string, minLength int) (*Sqids, error) {
-	return NewSqids(Options{
-		Alphabet:  alphabet,
-		MinLength: minLength,
-		Blocklist: nil,
-	})
-}
-
-// NewSqids -
-func NewSqids(options Options) (*Sqids, error) {
+func NewCustom(options Options) (*Sqids, error) {
 	alphabet := options.Alphabet
-	minLength := options.MinLength
-	blocklist := options.Blocklist
+	if alphabet == nil {
+		alphabet = &DefaultAlphabet
+	}
 
+	minLength := options.MinLength
+	if minLength == nil {
+		minLength = &DefaultMinLength
+	}
+
+	blocklist := options.Blocklist
 	if blocklist == nil {
-		b := Blocklist()
-		blocklist = &b
+		blocklist = &DefaultBlocklist
 	}
 
 	// check the length of the alphabet
-	if len(alphabet) < 5 {
+	if len(*alphabet) < 5 {
 		return nil, errors.New("alphabet length must be at least 5")
 	}
 
 	// check that the alphabet has only unique characters
-	if !hasUniqueChars(alphabet) {
+	if !hasUniqueChars(*alphabet) {
 		return nil, errors.New("alphabet must contain unique characters")
 	}
 
 	// test min length (type [might be lang-specific] + min length + max length)
-	if minLength < int(MinValue()) || minLength > len(alphabet) {
-		return nil, fmt.Errorf("minimum length has to be between %d and %d", MinValue(), len(alphabet))
+	if *minLength < int(MinValue()) || *minLength > len(*alphabet) {
+		return nil, fmt.Errorf("minimum length has to be between %d and %d", MinValue(), len(*alphabet))
 	}
 
 	// clean up blocklist:
@@ -72,7 +79,7 @@ func NewSqids(options Options) (*Sqids, error) {
 	// 2. no words less than 3 chars
 	// 3. if some words contain chars that are not in the alphabet, remove those
 	filteredBlocklist := []string{}
-	alphabetChars := strings.Split(alphabet, "")
+	alphabetChars := strings.Split(*alphabet, "")
 	for _, word := range *blocklist {
 		if len(word) >= 3 {
 			wordChars := strings.Split(word, "")
@@ -84,8 +91,8 @@ func NewSqids(options Options) (*Sqids, error) {
 	}
 
 	return &Sqids{
-		alphabet:  shuffle(alphabet),
-		minLength: minLength,
+		alphabet:  shuffle(*alphabet),
+		minLength: *minLength,
 		blocklist: filteredBlocklist,
 	}, nil
 }

@@ -5,11 +5,14 @@ import (
 	"testing"
 )
 
-func TestSimple(t *testing.T) {
+func TestAlphabetSimple(t *testing.T) {
 	numbers := []uint64{1, 2, 3}
 	id := "4d9fd2"
 
-	s, err := NewCustom("0123456789abcdef", 0)
+	alphabet := "0123456789abcdef"
+	s, err := NewCustom(Options{
+		Alphabet: &alphabet,
+	})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -23,27 +26,30 @@ func TestSimple(t *testing.T) {
 		t.Errorf("Encoding `%v` should produce `%v`, but instead produced `%v`", numbers, id, generatedID)
 	}
 
-	decodedNumbers := s.Decode(id)
+	decodedNumbers := s.Decode(generatedID)
 	if !reflect.DeepEqual(numbers, decodedNumbers) {
 		t.Errorf("Decoding `%v` should produce `%v`, but instead produced `%v`", id, numbers, decodedNumbers)
 	}
 }
 
 func TestShortAlphabet(t *testing.T) {
-	s, err := NewCustom("abcde", 0)
+	alphabet := "abcde"
+	s, err := NewCustom(Options{
+		Alphabet: &alphabet,
+	})
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	numbers := []uint64{1, 2, 3}
 
-	id, err := s.Encode(numbers)
+	generatedID, err := s.Encode(numbers)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	decodedNumbers := s.Decode(id)
+	decodedNumbers := s.Decode(generatedID)
 	if !reflect.DeepEqual(numbers, decodedNumbers) {
-		t.Errorf("Decoding `%v` should produce `%v`, but instead produced `%v`", id, numbers, decodedNumbers)
+		t.Errorf("Decoding `%v` should produce `%v`, but instead produced `%v`", generatedID, numbers, decodedNumbers)
 	}
 }

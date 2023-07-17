@@ -9,9 +9,7 @@ func TestBlocklist(t *testing.T) {
 	numbers := []uint64{1, 2, 3}
 	id := "TM0x1Mxz"
 
-	s, err := NewSqids(Options{
-		Alphabet:  "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",
-		MinLength: 0,
+	s, err := NewCustom(Options{
 		Blocklist: &[]string{
 			"8QRLaD",   // normal result of 1st encoding, let's block that word on purpose
 			"7T1cd0dL", // result of 2nd encoding
@@ -32,7 +30,7 @@ func TestBlocklist(t *testing.T) {
 		t.Errorf("Encoding `%v` should produce `%v`, but instead produced `%v`", numbers, id, generatedID)
 	}
 
-	decodedNumbers := s.Decode(id)
+	decodedNumbers := s.Decode(generatedID)
 	if !reflect.DeepEqual(numbers, decodedNumbers) {
 		t.Errorf("Decoding `%v` should produce `%v`, but instead produced `%v`", id, numbers, decodedNumbers)
 	}

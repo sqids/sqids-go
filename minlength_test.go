@@ -8,9 +8,7 @@ import (
 func TestMinLengthSimple(t *testing.T) {
 	minLength := len(DefaultAlphabet)
 	s, err := NewCustom(Options{
-		Alphabet:  nil,
 		MinLength: &minLength,
-		Blocklist: nil,
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -37,9 +35,7 @@ func TestMinLengthSimple(t *testing.T) {
 func TestMinLengthIncrementalNumbers(t *testing.T) {
 	minLength := len(DefaultAlphabet)
 	s, err := NewCustom(Options{
-		Alphabet:  nil,
 		MinLength: &minLength,
-		Blocklist: nil,
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -87,9 +83,7 @@ func TestMinLengths(t *testing.T) {
 			{MaxValue()},
 		} {
 			s, err := NewCustom(Options{
-				Alphabet:  nil,
 				MinLength: &minLength,
-				Blocklist: nil,
 			})
 			if err != nil {
 				t.Fatal(err)
@@ -114,18 +108,14 @@ func TestMinLengths(t *testing.T) {
 func TestOutOfRangeInvalidMinLength(t *testing.T) {
 	minLength := -1
 	if _, err := NewCustom(Options{
-		Alphabet:  nil,
 		MinLength: &minLength,
-		Blocklist: nil,
 	}); err == nil {
 		t.Errorf("Should not allow out of range min length")
 	}
 
 	minLength = len(DefaultAlphabet) + 1
 	if _, err := NewCustom(Options{
-		Alphabet:  nil,
 		MinLength: &minLength,
-		Blocklist: nil,
 	}); err == nil {
 		t.Errorf("Should not allow out of range min length")
 	}

@@ -221,6 +221,15 @@ func (s *Sqids) Decode(id string) []uint64 {
 
 		if len(chunks) > 0 {
 			alphabetWithoutSeparator := alphabet[:len(alphabet)-1]
+			charSet := make(map[rune]bool)
+			for _, c := range alphabetWithoutSeparator {
+				charSet[c] = true
+			}
+			for _, c := range chunks[0] {
+				if _, exists := charSet[c]; !exists {
+					return []uint64{}
+				}
+			}
 			ret = append(ret, toNumber(chunks[0], alphabetWithoutSeparator))
 
 			if len(chunks) > 1 {

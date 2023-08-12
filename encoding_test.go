@@ -213,5 +213,16 @@ func TestEncodingInvalidCharacter(t *testing.T) {
 	}
 }
 
+func TestDecodeInvalidIDWithRepeatingReservedCharacter(t *testing.T) {
+	s, err := New()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if !reflect.DeepEqual(s.Decode("fff"), []uint64{}) {
+		t.Errorf("Could not decode invalid ID with repeating reserved character")
+	}
+}
+
 // TestEncodingOutOfRange - no need since `[]uint64` handles ranges
 // func TestEncodingOutOfRange(t *testing.T) {}

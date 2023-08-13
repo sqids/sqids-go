@@ -44,7 +44,8 @@ import "github.com/sqids/sqids-go"
 
 ## 👩‍💻 Examples
 
-> 🚧 Please note that the following examples omit proper error handling:
+> **Note**
+> Please note that the following examples omit proper error handling.
 
 Simple encode & decode:
 

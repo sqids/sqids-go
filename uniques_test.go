@@ -8,7 +8,7 @@ import (
 const upper = 1_000_000
 
 func TestUniquesWithPadding(t *testing.T) {
-	minLength := len(DefaultAlphabet)
+	minLength := len(defaultAlphabet)
 	s, err := NewCustom(Options{
 		MinLength: &minLength,
 	})

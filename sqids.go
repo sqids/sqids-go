@@ -9,14 +9,14 @@ import (
 )
 
 var (
-	// DefaultAlphabet -
-	DefaultAlphabet string = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+	// defaultAlphabet -
+	defaultAlphabet string = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 
-	// DefaultMinLength -
-	DefaultMinLength int = 0
+	// defaultMinLength -
+	defaultMinLength int = 0
 
-	// DefaultBlocklist -
-	DefaultBlocklist []string = Blocklist()
+	// defaultBlocklist -
+	defaultBlocklist []string = newDefaultBlocklist()
 )
 
 // Options -
@@ -36,9 +36,9 @@ type Sqids struct {
 // New -
 func New() (*Sqids, error) {
 	return NewCustom(Options{
-		Alphabet:  &DefaultAlphabet,
-		MinLength: &DefaultMinLength,
-		Blocklist: &DefaultBlocklist,
+		Alphabet:  &defaultAlphabet,
+		MinLength: &defaultMinLength,
+		Blocklist: &defaultBlocklist,
 	})
 }
 
@@ -46,17 +46,17 @@ func New() (*Sqids, error) {
 func NewCustom(options Options) (*Sqids, error) {
 	alphabet := options.Alphabet
 	if alphabet == nil {
-		alphabet = &DefaultAlphabet
+		alphabet = &defaultAlphabet
 	}
 
 	minLength := options.MinLength
 	if minLength == nil {
-		minLength = &DefaultMinLength
+		minLength = &defaultMinLength
 	}
 
 	blocklist := options.Blocklist
 	if blocklist == nil {
-		blocklist = &DefaultBlocklist
+		blocklist = &defaultBlocklist
 	}
 
 	// check the length of the alphabet

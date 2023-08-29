@@ -9,7 +9,7 @@ func TestUniques(t *testing.T) {
 	u := upper()
 
 	t.Run("WithPadding", func(t *testing.T) {
-		minLength := len(DefaultAlphabet)
+		minLength := len(defaultAlphabet)
 
 		s, err := NewCustom(Options{
 			MinLength: &minLength,

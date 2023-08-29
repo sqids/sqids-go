@@ -6,15 +6,15 @@ import (
 )
 
 func TestMinLengthSimple(t *testing.T) {
-	minLength := len(defaultAlphabet)
-	s, err := NewCustom(Options{
-		MinLength: &minLength,
+	s, err := New(Options{
+		MinLength: len(defaultAlphabet),
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	numbers := []uint64{1, 2, 3}
+
 	id := "75JILToVsGerOADWmHlY38xvbaNZKQ9wdFS0B6kcMEtnRpgizhjU42qT1cd0dL"
 
 	generatedID, err := s.Encode(numbers)
@@ -33,9 +33,8 @@ func TestMinLengthSimple(t *testing.T) {
 }
 
 func TestMinLengthIncrementalNumbers(t *testing.T) {
-	minLength := len(defaultAlphabet)
-	s, err := NewCustom(Options{
-		MinLength: &minLength,
+	s, err := New(Options{
+		MinLength: len(defaultAlphabet),
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -74,16 +73,16 @@ func TestMinLengthIncrementalNumbers(t *testing.T) {
 func TestMinLengths(t *testing.T) {
 	for _, minLength := range []int{0, 1, 5, 10, len(defaultAlphabet)} {
 		for _, numbers := range [][]uint64{
-			{MinValue()},
+			{minUint64Value},
 			{0, 0, 0, 0, 0},
 			{1, 2, 3, 4, 5, 6, 7, 8, 9, 10},
 			{100, 200, 300},
 			{1000, 2000, 3000},
 			{1000000},
-			{MaxValue()},
+			{maxUint64Value},
 		} {
-			s, err := NewCustom(Options{
-				MinLength: &minLength,
+			s, err := New(Options{
+				MinLength: minLength,
 			})
 			if err != nil {
 				t.Fatal(err)
@@ -93,6 +92,7 @@ func TestMinLengths(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
+
 			if len(generatedID) < minLength {
 				t.Errorf("Encoding `%v` with min length `%v` produced `%v`", numbers, minLength, generatedID)
 			}
@@ -106,16 +106,14 @@ func TestMinLengths(t *testing.T) {
 }
 
 func TestOutOfRangeInvalidMinLength(t *testing.T) {
-	minLength := -1
-	if _, err := NewCustom(Options{
-		MinLength: &minLength,
+	if _, err := New(Options{
+		MinLength: -1,
 	}); err == nil {
 		t.Errorf("Should not allow out of range min length")
 	}
 
-	minLength = len(defaultAlphabet) + 1
-	if _, err := NewCustom(Options{
-		MinLength: &minLength,
+	if _, err := New(Options{
+		MinLength: len(defaultAlphabet) + 1,
 	}); err == nil {
 		t.Errorf("Should not allow out of range min length")
 	}

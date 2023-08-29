@@ -7,70 +7,74 @@ import (
 	"strings"
 )
 
-var (
-	// defaultAlphabet -
-	defaultAlphabet string = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-
-	// defaultMinLength -
-	defaultMinLength int = 0
-
-	// defaultBlocklist -
-	defaultBlocklist []string = newDefaultBlocklist()
+const (
+	defaultAlphabet   = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+	minAlphabetLength = 5
+	minUint64Value    = uint64(0)
+	maxUint64Value    = uint64(math.MaxUint64)
 )
 
-// Options -
+var defaultBlocklist []string = newDefaultBlocklist()
+
+// Options for a custom instance of Sqids
 type Options struct {
-	Alphabet  *string
-	MinLength *int
-	Blocklist *[]string
+	Alphabet  string
+	MinLength int
+	Blocklist []string
 }
 
-// Sqids -
+// Sqids lets you generate unique IDs from numbers
 type Sqids struct {
 	alphabet  string
 	minLength int
 	blocklist []string
 }
 
-// New -
-func New() (*Sqids, error) {
-	return NewCustom(Options{
-		Alphabet:  &defaultAlphabet,
-		MinLength: &defaultMinLength,
-		Blocklist: &defaultBlocklist,
-	})
+// New constructs an instance of Sqids
+func New(options ...Options) (*Sqids, error) {
+	if len(options) == 0 {
+		options = append(options, Options{
+			Alphabet:  defaultAlphabet,
+			Blocklist: defaultBlocklist,
+		})
+	}
+
+	// Validate the first given options value, or the default options if none were given.
+	o, err := validatedOptions(options[0])
+	if err != nil {
+		return nil, err
+	}
+
+	return &Sqids{
+		alphabet:  shuffle(o.Alphabet),
+		minLength: o.MinLength,
+		blocklist: o.Blocklist,
+	}, nil
 }
 
-// NewCustom -
-func NewCustom(options Options) (*Sqids, error) {
-	alphabet := options.Alphabet
-	if alphabet == nil {
-		alphabet = &defaultAlphabet
-	}
-
-	minLength := options.MinLength
-	if minLength == nil {
-		minLength = &defaultMinLength
-	}
-
-	blocklist := options.Blocklist
-	if blocklist == nil {
-		blocklist = &defaultBlocklist
+func validatedOptions(o Options) (Options, error) {
+	if o.Alphabet == "" {
+		o.Alphabet = defaultAlphabet
 	}
 
 	// check the length of the alphabet
-	if len(*alphabet) < 5 {
-		return nil, errors.New("alphabet length must be at least 5")
+	if len(o.Alphabet) < minAlphabetLength {
+		return Options{}, errors.New("alphabet length must be at least 5")
 	}
 
 	// check that the alphabet has only unique characters
-	if !hasUniqueChars(*alphabet) {
-		return nil, errors.New("alphabet must contain unique characters")
+	if !hasUniqueChars(o.Alphabet) {
+		return Options{}, errors.New("alphabet must contain unique characters")
 	}
 
 	// test min length (type [might be lang-specific] + min length + max length)
-	if *minLength < int(MinValue()) || *minLength > len(*alphabet) {
-		return nil, fmt.Errorf("minimum length has to be between %d and %d", MinValue(), len(*alphabet))
+	if o.MinLength < int(minUint64Value) || o.MinLength > len(o.Alphabet) {
+		return Options{}, fmt.Errorf("minimum length has to be between %d and %d", minUint64Value, len(o.Alphabet))
+	}
+
+	// Use the default blocklist if the Blocklist option is nil
+	if o.Blocklist == nil {
+		o.Blocklist = defaultBlocklist
 	}
 
 	// clean up blocklist:
@@ -78,23 +82,24 @@ func NewCustom(options Options) (*Sqids, error) {
 	// 2. no words less than 3 chars
 	// 3. if some words contain chars that are not in the alphabet, remove those
 	filteredBlocklist := []string{}
-	alphabetChars := strings.Split(strings.ToLower(*alphabet), "")
-	for _, word := range *blocklist {
+
+	alphabetChars := strings.Split(strings.ToLower(o.Alphabet), "")
+
+	for _, word := range o.Blocklist {
 		if len(word) >= 3 {
 			wordLowercased := strings.ToLower(word)
 			wordChars := strings.Split(wordLowercased, "")
 			intersection := intersection(wordChars, alphabetChars)
+
 			if len(intersection) == len(wordChars) {
 				filteredBlocklist = append(filteredBlocklist, strings.ToLower(wordLowercased))
 			}
 		}
 	}
 
-	return &Sqids{
-		alphabet:  shuffle(*alphabet),
-		minLength: *minLength,
-		blocklist: filteredBlocklist,
-	}, nil
+	o.Blocklist = filteredBlocklist
+
+	return o, nil
 }
 
 // Encode -
@@ -104,18 +109,7 @@ func (s *Sqids) Encode(numbers []uint64) (string, error) {
 		return "", nil
 	}
 
-	inRangeNumbers := []uint64{}
-	for _, n := range numbers {
-		if n >= MinValue() && n <= MaxValue() {
-			inRangeNumbers = append(inRangeNumbers, n)
-		}
-	}
-
-	if len(inRangeNumbers) != len(numbers) {
-		return "", fmt.Errorf("encoding supports numbers between %d and %d", MinValue(), MaxValue())
-	}
-
-	return s.encodeNumbers(inRangeNumbers, false)
+	return s.encodeNumbers(numbers, false)
 }
 
 func (s *Sqids) encodeNumbers(numbers []uint64, partitioned bool) (string, error) {
@@ -169,7 +163,7 @@ func (s *Sqids) encodeNumbers(numbers []uint64, partitioned bool) (string, error
 
 	if s.isBlockedID(id) {
 		if partitioned {
-			if numbers[0]+1 > MaxValue() {
+			if numbers[0] == maxUint64Value {
 				return "", errors.New("ran out of range checking against the blocklist")
 			}
 
@@ -187,7 +181,7 @@ func (s *Sqids) encodeNumbers(numbers []uint64, partitioned bool) (string, error
 	return id, nil
 }
 
-// Decode -
+// Decode id string into a slice of uint64 values
 func (s *Sqids) Decode(id string) []uint64 {
 	ret := []uint64{}
 
@@ -196,6 +190,7 @@ func (s *Sqids) Decode(id string) []uint64 {
 	}
 
 	alphabetChars := strings.Split(s.alphabet, "")
+
 	for _, c := range strings.Split(id, "") {
 		if !contains(alphabetChars, c) {
 			return ret
@@ -206,6 +201,7 @@ func (s *Sqids) Decode(id string) []uint64 {
 	offset := strings.Index(s.alphabet, prefix)
 	alphabet := s.alphabet[offset:] + s.alphabet[:offset]
 	partition := string(alphabet[1])
+
 	alphabet = alphabet[2:]
 	id = id[1:]
 
@@ -222,14 +218,17 @@ func (s *Sqids) Decode(id string) []uint64 {
 		if len(chunks) > 0 {
 			alphabetWithoutSeparator := alphabet[:len(alphabet)-1]
 			charSet := make(map[rune]bool)
+
 			for _, c := range alphabetWithoutSeparator {
 				charSet[c] = true
 			}
+
 			for _, c := range chunks[0] {
 				if _, exists := charSet[c]; !exists {
 					return []uint64{}
 				}
 			}
+
 			ret = append(ret, toNumber(chunks[0], alphabetWithoutSeparator))
 
 			if len(chunks) > 1 {
@@ -243,14 +242,14 @@ func (s *Sqids) Decode(id string) []uint64 {
 	return ret
 }
 
-// MinValue -
+// MinValue returns the minimum uint64 value, which is 0
 func MinValue() uint64 {
-	return 0
+	return minUint64Value
 }
 
-// MaxValue -
+// MaxValue returns the maximum uint64 value, which is 18446744073709551615
 func MaxValue() uint64 {
-	return math.MaxUint64
+	return maxUint64Value
 }
 
 func shuffle(alphabet string) string {
@@ -271,6 +270,7 @@ func toID(num uint64, alphabet string) string {
 	result := num
 	for {
 		index := result % uint64(len(chars))
+
 		id = append([]string{chars[index]}, id...)
 		result = result / uint64(len(chars))
 

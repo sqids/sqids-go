@@ -5,6 +5,21 @@ import (
 	"testing"
 )
 
+func TestBlocklist(t *testing.T) {
+	var (
+		defaultBlocklist = Blocklist()
+		customBlocklist  = Blocklist("custom1", "custom2")
+	)
+
+	if got, want := len(defaultBlocklist), len(newDefaultBlocklist()); got != want {
+		t.Fatalf("len(defaultBlocklist) = %d, want %d", got, want)
+	}
+
+	if got, want := len(customBlocklist), len(defaultBlocklist)+2; got != want {
+		t.Fatalf("len(customBlocklist) = %d, want %d", got, want)
+	}
+}
+
 func TestBlocklistDefault(t *testing.T) {
 	numbers := []uint64{200044}
 	blockedID := "sexy"
@@ -98,7 +113,7 @@ func TestBlocklistNonEmpty(t *testing.T) {
 	}
 }
 
-func TestBlocklist(t *testing.T) {
+func TestNewCustomBlocklist(t *testing.T) {
 	numbers := []uint64{1, 2, 3}
 	id := "TM0x1Mxz"
 

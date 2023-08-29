@@ -5,6 +5,27 @@ import (
 	"testing"
 )
 
+func BenchmarkEncodeDecode(b *testing.B) {
+	numbers := []uint64{1, 2, 3, 4, 5}
+
+	s, err := New()
+	if err != nil {
+		b.Fatal(err)
+	}
+
+	for i := 0; i < b.N; i++ {
+		id, err := s.Encode(numbers)
+		if err != nil {
+			b.Fatal(err)
+		}
+
+		decodedNumbers := s.Decode(id)
+		if !reflect.DeepEqual(numbers, decodedNumbers) {
+			b.Errorf("Could not encode/decode `%v`", numbers)
+		}
+	}
+}
+
 func TestEncodingSimple(t *testing.T) {
 	numbers := []uint64{1, 2, 3}
 

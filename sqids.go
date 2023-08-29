@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"math"
-	"regexp"
 	"strings"
 )
 
@@ -332,7 +331,6 @@ func contains(slice []string, str string) bool {
 
 func (s *Sqids) isBlockedID(id string) bool {
 	id = strings.ToLower(id)
-	r := regexp.MustCompile(`\d`)
 
 	for _, word := range s.blocklist {
 		if len(word) <= len(id) {
@@ -340,13 +338,23 @@ func (s *Sqids) isBlockedID(id string) bool {
 				if id == word {
 					return true
 				}
-			} else if r.MatchString(word) {
+			} else if hasDigit(word) {
 				if strings.HasPrefix(id, word) || strings.HasSuffix(id, word) {
 					return true
 				}
 			} else if strings.Contains(id, word) {
 				return true
 			}
+		}
+	}
+
+	return false
+}
+
+func hasDigit(word string) bool {
+	for _, r := range word {
+		if r >= '0' && r <= '9' {
+			return true
 		}
 	}
 

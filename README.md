@@ -49,10 +49,11 @@ import "github.com/sqids/sqids-go"
 
 Simple encode & decode:
 
-```golang
-s, _ := sqids.New()
-id, _ := s.Encode([]uint64{1, 2, 3}) // "8QRLaD"
-numbers := s.Decode(id) // [1, 2, 3]
+[embedmd]:# (examples/sqids-encode-decode/sqids-encode-decode.go /(.+)sqids.New/ /\[1, 2, 3\]/)
+```go
+	s, _ := sqids.New()
+	id, _ := s.Encode([]uint64{1, 2, 3}) // "8QRLaD"
+	numbers := s.Decode(id)              // [1, 2, 3]
 ```
 
 > **Note**
@@ -60,32 +61,35 @@ numbers := s.Decode(id) // [1, 2, 3]
 
 Randomize IDs by providing a custom alphabet:
 
-```golang
-s, _ := sqids.New(sqids.Options{
-    Alphabet: "FxnXM1kBN6cuhsAvjW3Co7l2RePyY8DwaU04Tzt9fHQrqSVKdpimLGIJOgb5ZE",
-})
-id, _ := s.Encode([]uint64{1, 2, 3}) // "B5aMa3"
-numbers := s.Decode(id) // [1, 2, 3]
+[embedmd]:# (examples/sqids-custom-alphabet/sqids-custom-alphabet.go /(.+)sqids.New/ /\[1, 2, 3\]/)
+```go
+	s, _ := sqids.New(sqids.Options{
+		Alphabet: "FxnXM1kBN6cuhsAvjW3Co7l2RePyY8DwaU04Tzt9fHQrqSVKdpimLGIJOgb5ZE",
+	})
+	id, _ := s.Encode([]uint64{1, 2, 3}) // "B5aMa3"
+	numbers := s.Decode(id)              // [1, 2, 3]
 ```
 
 Enforce a *minimum* length for IDs:
 
-```golang
-s, _ := sqids.New(sqids.Options{
-    MinLength: 10,
-})
-id, _ := s.Encode([]uint64{1, 2, 3}) // "75JT1cd0dL"
-numbers := s.Decode(id) // [1, 2, 3]
+[embedmd]:# (examples/sqids-minimum-length/sqids-minimum-length.go /(.+)sqids.New/ /\[1, 2, 3\]/)
+```go
+	s, _ := sqids.New(sqids.Options{
+		MinLength: 10,
+	})
+	id, _ := s.Encode([]uint64{1, 2, 3}) // "75JT1cd0dL"
+	numbers := s.Decode(id)              // [1, 2, 3]
 ```
 
 Prevent specific words from appearing anywhere in the auto-generated IDs:
 
-```golang
-s, _ := sqids.New(sqids.Options{
-    Blocklist: []string{"word1", "word2"},
-})
-id, _ := s.Encode([]uint64{1, 2, 3}) // "8QRLaD"
-numbers := s.Decode(id) // [1, 2, 3]
+[embedmd]:# (examples/sqids-blocklist/sqids-blocklist.go /(.+)sqids.New/ /\[1, 2, 3\]/)
+```go
+	s, _ := sqids.New(sqids.Options{
+		Blocklist: []string{"word1", "word2"},
+	})
+	id, _ := s.Encode([]uint64{1, 2, 3}) // "8QRLaD"
+	numbers := s.Decode(id)              // [1, 2, 3]
 ```
 
 ## 📝 License

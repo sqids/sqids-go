@@ -1,5 +1,7 @@
 package sqids
 
+//go:generate go run github.com/campoy/embedmd/v2@v2.0.0 -w README.md
+
 import (
 	"errors"
 	"fmt"

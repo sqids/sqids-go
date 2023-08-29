@@ -9,10 +9,8 @@ func TestUniques(t *testing.T) {
 	u := upper()
 
 	t.Run("WithPadding", func(t *testing.T) {
-		minLength := len(defaultAlphabet)
-
-		s, err := NewCustom(Options{
-			MinLength: &minLength,
+		s, err := New(Options{
+			MinLength: len(defaultAlphabet),
 		})
 		if err != nil {
 			t.Fatal(err)

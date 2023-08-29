@@ -46,7 +46,7 @@ func TestEncodingSimple(t *testing.T) {
 }
 
 func TestEncodingDifferentInputs(t *testing.T) {
-	numbers := []uint64{0, 0, 0, 1, 2, 3, 100, 1_000, 100_000, 1_000_000, MaxValue()}
+	numbers := []uint64{minUint64Value, 0, 0, 1, 2, 3, 100, 1_000, 100_000, 1_000_000, maxUint64Value}
 
 	s, err := New()
 	if err != nil {

@@ -10,8 +10,8 @@ func TestAlphabetSimple(t *testing.T) {
 	id := "4d9fd2"
 
 	alphabet := "0123456789abcdef"
-	s, err := NewCustom(Options{
-		Alphabet: &alphabet,
+	s, err := New(Options{
+		Alphabet: alphabet,
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -33,9 +33,8 @@ func TestAlphabetSimple(t *testing.T) {
 }
 
 func TestAlphabetShort(t *testing.T) {
-	alphabet := "abcde"
-	s, err := NewCustom(Options{
-		Alphabet: &alphabet,
+	s, err := New(Options{
+		Alphabet: "abcde",
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -55,9 +54,8 @@ func TestAlphabetShort(t *testing.T) {
 }
 
 func TestAlphabetLong(t *testing.T) {
-	alphabet := "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()-_+|{}[];:'\"/?.>,<`~"
-	s, err := NewCustom(Options{
-		Alphabet: &alphabet,
+	s, err := New(Options{
+		Alphabet: "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()-_+|{}[];:'\"/?.>,<`~",
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -77,18 +75,16 @@ func TestAlphabetLong(t *testing.T) {
 }
 
 func TestRepeatingAlphabetCharacters(t *testing.T) {
-	alphabet := "aabcdefg"
-	if _, err := NewCustom(Options{
-		Alphabet: &alphabet,
+	if _, err := New(Options{
+		Alphabet: "aabcdefg",
 	}); err == nil {
 		t.Errorf("Should not accept alphabet with repeating characters")
 	}
 }
 
 func TestTooShortOfAnAlphabet(t *testing.T) {
-	alphabet := "abcd"
-	if _, err := NewCustom(Options{
-		Alphabet: &alphabet,
+	if _, err := New(Options{
+		Alphabet: "abcd",
 	}); err == nil {
 		t.Errorf("Should not accept too short of an alphabet")
 	}

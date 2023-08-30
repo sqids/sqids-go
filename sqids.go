@@ -78,13 +78,14 @@ func NewCustom(options Options) (*Sqids, error) {
 	// 2. no words less than 3 chars
 	// 3. if some words contain chars that are not in the alphabet, remove those
 	filteredBlocklist := []string{}
-	alphabetChars := strings.Split(*alphabet, "")
+	alphabetChars := strings.Split(strings.ToLower(*alphabet), "")
 	for _, word := range *blocklist {
 		if len(word) >= 3 {
-			wordChars := strings.Split(word, "")
+			wordLowercased := strings.ToLower(word)
+			wordChars := strings.Split(wordLowercased, "")
 			intersection := intersection(wordChars, alphabetChars)
 			if len(intersection) == len(wordChars) {
-				filteredBlocklist = append(filteredBlocklist, strings.ToLower(word))
+				filteredBlocklist = append(filteredBlocklist, strings.ToLower(wordLowercased))
 			}
 		}
 	}

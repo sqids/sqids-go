@@ -185,3 +185,33 @@ func TestShortBlocklistMatch(t *testing.T) {
 		t.Errorf("Decoding `%v` should produce `%v`, but instead produced `%v`", generatedID, numbers, decodedNumbers)
 	}
 }
+
+func TestUpperCaseAlphabetBlocklistFiltering(t *testing.T) {
+	numbers := []uint64{1, 2, 3}
+	id := "ULPBZGBM"
+
+	alphabet := "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	s, err := NewCustom(Options{
+		Alphabet:  &alphabet,
+		Blocklist: &[]string{"sqnmpn"}, // lowercase blocklist in only-uppercase alphabet
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	generatedID, err := s.Encode(numbers)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	decodedNumbers := s.Decode(id)
+
+	// without blocklist, would've been "SQNMPN"
+	if id != generatedID {
+		t.Errorf("Encoding `%v` should produce `%v`, but instead produced `%v`", numbers, id, generatedID)
+	}
+
+	if !reflect.DeepEqual(numbers, decodedNumbers) {
+		t.Errorf("Decoding `%v` should produce `%v`, but instead produced `%v`", generatedID, numbers, decodedNumbers)
+	}
+}

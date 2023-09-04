@@ -219,3 +219,29 @@ func TestUpperCaseAlphabetBlocklistFiltering(t *testing.T) {
 		t.Errorf("Decoding `%v` should produce `%v`, but instead produced `%v`", generatedID, numbers, decodedNumbers)
 	}
 }
+
+func TestFilterBlocklist(t *testing.T) {
+	t.Run("no words less than 3 chars", func(t *testing.T) {
+		filtered := filterBlocklist("YESNO", []string{"yes", "no"})
+
+		if got, want := len(filtered), 1; got != want {
+			t.Fatalf("len(filtered) = %d, want %d", got, want)
+		}
+
+		if got, want := filtered[0], "yes"; got != want {
+			t.Fatalf("filtered[0] = %q, want %q", got, want)
+		}
+	})
+
+	t.Run("remove words containing letters not in alphabet", func(t *testing.T) {
+		filtered := filterBlocklist("YESNO", []string{"yes", "nope"})
+
+		if got, want := len(filtered), 1; got != want {
+			t.Fatalf("len(filtered) = %d, want %d", got, want)
+		}
+
+		if got, want := filtered[0], "yes"; got != want {
+			t.Fatalf("filtered[0] = %q, want %q", got, want)
+		}
+	})
+}

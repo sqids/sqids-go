@@ -74,32 +74,7 @@ func validatedOptions(o Options) (Options, error) {
 		return Options{}, fmt.Errorf("minimum length has to be between %d and %d", minUint64Value, len(o.Alphabet))
 	}
 
-	// Use the default blocklist if the Blocklist option is nil
-	if o.Blocklist == nil {
-		o.Blocklist = defaultBlocklist
-	}
-
-	// clean up blocklist:
-	// 1. all blocklist words should be lowercase
-	// 2. no words less than 3 chars
-	// 3. if some words contain chars that are not in the alphabet, remove those
-	filteredBlocklist := []string{}
-
-	alphabetChars := strings.Split(strings.ToLower(o.Alphabet), "")
-
-	for _, word := range o.Blocklist {
-		if len(word) >= 3 {
-			wordLowercased := strings.ToLower(word)
-			wordChars := strings.Split(wordLowercased, "")
-			intersection := intersection(wordChars, alphabetChars)
-
-			if len(intersection) == len(wordChars) {
-				filteredBlocklist = append(filteredBlocklist, strings.ToLower(wordLowercased))
-			}
-		}
-	}
-
-	o.Blocklist = filteredBlocklist
+	o.Blocklist = filterBlocklist(o.Alphabet, o.Blocklist)
 
 	return o, nil
 }
@@ -304,23 +279,6 @@ func hasUniqueChars(str string) bool {
 		charSet[c] = true
 	}
 	return true
-}
-
-func intersection(slice1, slice2 []string) []string {
-	intersect := []string{}
-	set := make(map[string]bool)
-
-	for _, s := range slice2 {
-		set[s] = true
-	}
-
-	for _, s := range slice1 {
-		if set[s] {
-			intersect = append(intersect, s)
-		}
-	}
-
-	return intersect
 }
 
 func contains(slice []string, str string) bool {

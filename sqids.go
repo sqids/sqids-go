@@ -18,6 +18,14 @@ const (
 
 var defaultBlocklist []string = newDefaultBlocklist()
 
+// Alphabet validation errors
+var (
+	errAlphabetMultibyte      = errors.New("alphabet must not contain any multibyte characters")
+	errAlphabetTooShort       = errors.New("alphabet length must be at least 5")
+	errAlphabetNotUniqueChars = errors.New("alphabet must contain unique characters")
+	errAlphabetMinLength      = errors.New("alphabet minimum length")
+)
+
 // Options for a custom instance of Sqids
 type Options struct {
 	Alphabet  string
@@ -59,19 +67,24 @@ func validatedOptions(o Options) (Options, error) {
 		o.Alphabet = defaultAlphabet
 	}
 
+	// check that the alphabet does not contain multibyte characters
+	if len(o.Alphabet) != len([]rune(o.Alphabet)) {
+		return Options{}, errAlphabetMultibyte
+	}
+
 	// check the length of the alphabet
 	if len(o.Alphabet) < minAlphabetLength {
-		return Options{}, errors.New("alphabet length must be at least 5")
+		return Options{}, errAlphabetTooShort
 	}
 
 	// check that the alphabet has only unique characters
 	if !hasUniqueChars(o.Alphabet) {
-		return Options{}, errors.New("alphabet must contain unique characters")
+		return Options{}, errAlphabetNotUniqueChars
 	}
 
 	// test min length (type [might be lang-specific] + min length + max length)
 	if o.MinLength < int(minUint64Value) || o.MinLength > len(o.Alphabet) {
-		return Options{}, fmt.Errorf("minimum length has to be between %d and %d", minUint64Value, len(o.Alphabet))
+		return Options{}, fmt.Errorf("%w has to be between %d and %d", errAlphabetMinLength, minUint64Value, len(o.Alphabet))
 	}
 
 	o.Blocklist = filterBlocklist(o.Alphabet, o.Blocklist)

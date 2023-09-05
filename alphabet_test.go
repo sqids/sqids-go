@@ -5,6 +5,16 @@ import (
 	"testing"
 )
 
+func TestMultibyteAlphabet(t *testing.T) {
+	_, err := New(Options{
+		Alphabet: "ë1092",
+	})
+
+	if err != errAlphabetMultibyte {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
 func TestAlphabetSimple(t *testing.T) {
 	numbers := []uint64{1, 2, 3}
 	id := "4d9fd2"

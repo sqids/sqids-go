@@ -1,2 +1,3 @@
 profile.out
 sqids-go.test
+testdata/fuzz

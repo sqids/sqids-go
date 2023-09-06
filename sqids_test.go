@@ -42,3 +42,18 @@ func TestCalculateOffset(t *testing.T) {
 		}
 	}
 }
+
+func TestDecode(t *testing.T) {
+	s, err := New()
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if got, want := len(s.Decode("Re")), 0; got != want {
+		t.Fatalf(`len(s.Decode("Re")) = %d, want %d`, got, want)
+	}
+
+	if got, want := len(s.Decode("U9")), 1; got != want {
+		t.Fatalf(`len(s.Decode("U9")) = %d, want %d`, got, want)
+	}
+}

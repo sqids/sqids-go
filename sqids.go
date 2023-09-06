@@ -230,7 +230,11 @@ func (s *Sqids) Decode(id string) []uint64 {
 			}
 		}
 
-		rid = joinRuneSlices(chunks[1:], separator)
+		if len(chunks) > 0 {
+			rid = joinRuneSlices(chunks[1:], separator)
+		} else {
+			return []uint64{}
+		}
 	}
 
 	return ret

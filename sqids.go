@@ -92,7 +92,7 @@ func validatedOptions(o Options) (Options, error) {
 	return o, nil
 }
 
-// Encode -
+// Encode a slice of uint64 values into an ID string
 func (s *Sqids) Encode(numbers []uint64) (string, error) {
 	// if no numbers passed, return an empty string
 	if len(numbers) == 0 {
@@ -103,43 +103,43 @@ func (s *Sqids) Encode(numbers []uint64) (string, error) {
 }
 
 func (s *Sqids) encodeNumbers(numbers []uint64, partitioned bool) (string, error) {
-	var err error
+	var (
+		err       error
+		offset    = calculateOffset(s.alphabet, numbers)
+		alphabet  = alphabetOffset(s.alphabet, offset)
+		prefix    = alphabet[0]
+		partition = alphabet[1]
+		ret       = []rune{prefix}
+	)
 
-	offset := len(numbers)
-	for i, v := range numbers {
-		offset += int(s.alphabet[v%uint64(len(s.alphabet))]) + i
-	}
-	offset = offset % len(s.alphabet)
-
-	alphabet := s.alphabet[offset:] + s.alphabet[:offset]
-	prefix := string(alphabet[0])
-	partition := string(alphabet[1])
 	alphabet = alphabet[2:]
-
-	ret := []string{prefix}
 
 	for i, num := range numbers {
 		alphabetWithoutSeparator := alphabet[:len(alphabet)-1]
-		ret = append(ret, toID(num, alphabetWithoutSeparator))
+
+		ret = append(ret, []rune(toID(num, string(alphabetWithoutSeparator)))...)
 
 		if i < len(numbers)-1 {
-			var separator string
+			var separator rune
+
 			if partitioned && i == 0 {
 				separator = partition
 			} else {
-				separator = string(alphabet[len(alphabet)-1])
+				separator = alphabet[len(alphabet)-1]
 			}
 
 			ret = append(ret, separator)
-			alphabet = shuffle(alphabet)
+
+			alphabet = []rune(shuffle(string(alphabet)))
 		}
 	}
 
-	id := strings.Join(ret, "")
+	id := string(ret)
 
 	if s.minLength > len(id) {
 		if !partitioned {
 			numbers = append([]uint64{0}, numbers...)
+
 			id, err = s.encodeNumbers(numbers, true)
 			if err != nil {
 				return "", err
@@ -147,7 +147,7 @@ func (s *Sqids) encodeNumbers(numbers []uint64, partitioned bool) (string, error
 		}
 
 		if s.minLength > len(id) {
-			id = id[:1] + alphabet[:s.minLength-len(id)] + id[1:]
+			id = id[:1] + string(alphabet[:s.minLength-len(id)]) + id[1:]
 		}
 	}
 
@@ -179,31 +179,35 @@ func (s *Sqids) Decode(id string) []uint64 {
 		return ret
 	}
 
-	alphabetChars := strings.Split(s.alphabet, "")
+	rid := []rune(id)
 
-	for _, c := range strings.Split(id, "") {
-		if !contains(alphabetChars, c) {
+	alphabet := []rune(s.alphabet)
+
+	for _, r := range rid {
+		if !contains(alphabet, r) {
 			return ret
 		}
 	}
 
-	prefix := string(id[0])
-	offset := strings.Index(s.alphabet, prefix)
-	alphabet := s.alphabet[offset:] + s.alphabet[:offset]
-	partition := string(alphabet[1])
+	prefix := rid[0]
+	offset := index(alphabet, prefix)
 
+	alphabet = alphabetOffset(s.alphabet, offset)
+
+	partition := alphabet[1]
+
+	rid = rid[1:]
 	alphabet = alphabet[2:]
-	id = id[1:]
 
-	partitionIndex := strings.Index(id, partition)
-	if partitionIndex > 0 && partitionIndex < len(id)-1 {
-		id = id[partitionIndex+1:]
-		alphabet = shuffle(alphabet)
+	if pi := index(rid, partition); pi > 0 && pi < len(rid)-1 {
+		rid = rid[pi+1:]
+		alphabet = shuffleRunes(alphabet)
 	}
 
-	for len(id) > 0 {
-		separator := string(alphabet[len(alphabet)-1])
-		chunks := strings.Split(id, separator)
+	for len(rid) > 0 {
+		separator := alphabet[len(alphabet)-1]
+
+		chunks := splitChunks(rid, separator)
 
 		if len(chunks) > 0 {
 			alphabetWithoutSeparator := alphabet[:len(alphabet)-1]
@@ -222,85 +226,57 @@ func (s *Sqids) Decode(id string) []uint64 {
 			ret = append(ret, toNumber(chunks[0], alphabetWithoutSeparator))
 
 			if len(chunks) > 1 {
-				alphabet = shuffle(alphabet)
+				alphabet = shuffleRunes(alphabet)
 			}
 		}
 
-		id = strings.Join(chunks[1:], separator)
+		rid = joinRuneSlices(chunks[1:], separator)
 	}
 
 	return ret
 }
 
-// MinValue returns the minimum uint64 value, which is 0
-func MinValue() uint64 {
-	return minUint64Value
+func alphabetOffset(alphabet string, offset int) []rune {
+	runes := []rune(alphabet)
+
+	return append(runes[offset:], runes[:offset]...)
 }
 
-// MaxValue returns the maximum uint64 value, which is 18446744073709551615
-func MaxValue() uint64 {
-	return maxUint64Value
-}
+func joinRuneSlices(rs [][]rune, separator rune) []rune {
+	var runes []rune
 
-func shuffle(alphabet string) string {
-	chars := strings.Split(alphabet, "")
+	if len(rs) > 0 {
+		for _, s := range rs[:len(rs)-1] {
+			runes = append(runes, s...)
+			runes = append(runes, separator)
+		}
 
-	for i, j := 0, len(chars)-1; j > 0; i, j = i+1, j-1 {
-		r := (i*j + int(chars[i][0]) + int(chars[j][0])) % len(chars)
-		chars[i], chars[r] = chars[r], chars[i]
+		runes = append(runes, rs[len(rs)-1]...)
 	}
 
-	return strings.Join(chars, "")
+	return runes
 }
 
-func toID(num uint64, alphabet string) string {
-	id := []string{}
-	chars := strings.Split(alphabet, "")
+func splitChunks(runes []rune, separator rune) [][]rune {
+	var n int
 
-	result := num
-	for {
-		index := result % uint64(len(chars))
+	var out [][]rune
 
-		id = append([]string{chars[index]}, id...)
-		result = result / uint64(len(chars))
+	for _, r := range runes {
+		if r == separator {
+			n++
+		}
 
-		if result == 0 {
-			break
+		if len(out) == n {
+			out = append(out, []rune{})
+		}
+
+		if r != separator {
+			out[n] = append(out[n], r)
 		}
 	}
 
-	return strings.Join(id, "")
-}
-
-func toNumber(id string, alphabet string) uint64 {
-	chars := strings.Split(alphabet, "")
-	result := uint64(0)
-
-	for _, v := range id {
-		result = result*uint64(len(chars)) + uint64(strings.Index(alphabet, string(v)))
-	}
-
-	return result
-}
-
-func hasUniqueChars(str string) bool {
-	charSet := make(map[rune]bool)
-	for _, c := range str {
-		if _, ok := charSet[c]; ok {
-			return false
-		}
-		charSet[c] = true
-	}
-	return true
-}
-
-func contains(slice []string, str string) bool {
-	for _, item := range slice {
-		if item == str {
-			return true
-		}
-	}
-	return false
+	return out
 }
 
 func (s *Sqids) isBlockedID(id string) bool {
@@ -319,6 +295,113 @@ func (s *Sqids) isBlockedID(id string) bool {
 			} else if strings.Contains(id, word) {
 				return true
 			}
+		}
+	}
+
+	return false
+}
+
+// MinValue returns the minimum uint64 value, which is 0
+func MinValue() uint64 {
+	return minUint64Value
+}
+
+// MaxValue returns the maximum uint64 value, which is 18446744073709551615
+func MaxValue() uint64 {
+	return maxUint64Value
+}
+
+func calculateOffset(alphabet string, numbers []uint64) int {
+	var (
+		offset = len(numbers)
+		runes  = []rune(alphabet)
+		count  = uint64(len(runes))
+	)
+
+	if offset == 0 || len(runes) == 0 {
+		return -1
+	}
+
+	for i, v := range numbers {
+		offset += int(runes[v%count]) + i
+	}
+
+	return offset % len(runes)
+}
+
+func shuffle(alphabet string) string {
+	return string(shuffleRunes([]rune(alphabet)))
+}
+
+func shuffleRunes(runes []rune) []rune {
+	for i, j := 0, len(runes)-1; j > 0; i, j = i+1, j-1 {
+		r := (i*j + int(runes[i]) + int(runes[j])) % len(runes)
+		runes[i], runes[r] = runes[r], runes[i]
+	}
+
+	return runes
+}
+
+func toID(num uint64, alphabet string) string {
+	var (
+		id     = []rune{}
+		runes  = []rune(alphabet)
+		count  = uint64(len(runes))
+		result = num
+	)
+
+	for {
+		index := result % count
+
+		id = append([]rune{runes[index]}, id...)
+
+		result = result / count
+
+		if result == 0 {
+			break
+		}
+	}
+
+	return string(id)
+}
+
+func toNumber(rid []rune, runes []rune) uint64 {
+	count := uint64(len(runes))
+
+	var result uint64
+
+	for _, r := range rid {
+		result = (result * count) + uint64(index(runes, r))
+	}
+
+	return result
+}
+
+func index(s []rune, r rune) int {
+	for i := range s {
+		if r == s[i] {
+			return i
+		}
+	}
+
+	return -1
+}
+
+func hasUniqueChars(str string) bool {
+	charSet := make(map[rune]bool)
+	for _, c := range str {
+		if _, ok := charSet[c]; ok {
+			return false
+		}
+		charSet[c] = true
+	}
+	return true
+}
+
+func contains(s []rune, r rune) bool {
+	for _, v := range s {
+		if v == r {
+			return true
 		}
 	}
 

@@ -52,23 +52,12 @@ Simple encode & decode:
 [embedmd]:# (examples/sqids-encode-decode/sqids-encode-decode.go /.+sqids.New/ /\[1, 2, 3\]/)
 ```go
 	s, _ := sqids.New()
-	id, _ := s.Encode([]uint64{1, 2, 3}) // "8QRLaD"
+	id, _ := s.Encode([]uint64{1, 2, 3}) // "86Rf07"
 	numbers := s.Decode(id)              // [1, 2, 3]
 ```
 
 > **Note**
 > 🚧 Because of the algorithm's design, **multiple IDs can decode back into the same sequence of numbers**. If it's important to your design that IDs are canonical, you have to manually re-encode decoded numbers and check that the generated ID matches.
-
-Randomize IDs by providing a custom alphabet:
-
-[embedmd]:# (examples/sqids-custom-alphabet/sqids-custom-alphabet.go /.+sqids.New/ /\[1, 2, 3\]/)
-```go
-	s, _ := sqids.New(sqids.Options{
-		Alphabet: "FxnXM1kBN6cuhsAvjW3Co7l2RePyY8DwaU04Tzt9fHQrqSVKdpimLGIJOgb5ZE",
-	})
-	id, _ := s.Encode([]uint64{1, 2, 3}) // "B5aMa3"
-	numbers := s.Decode(id)              // [1, 2, 3]
-```
 
 Enforce a *minimum* length for IDs:
 
@@ -77,7 +66,17 @@ Enforce a *minimum* length for IDs:
 	s, _ := sqids.New(sqids.Options{
 		MinLength: 10,
 	})
-	id, _ := s.Encode([]uint64{1, 2, 3}) // "75JT1cd0dL"
+	id, _ := s.Encode([]uint64{1, 2, 3}) // "86Rf07xd4z"
+	numbers := s.Decode(id)              // [1, 2, 3]
+```
+Randomize IDs by providing a custom alphabet:
+
+[embedmd]:# (examples/sqids-custom-alphabet/sqids-custom-alphabet.go /.+sqids.New/ /\[1, 2, 3\]/)
+```go
+	s, _ := sqids.New(sqids.Options{
+		Alphabet: "FxnXM1kBN6cuhsAvjW3Co7l2RePyY8DwaU04Tzt9fHQrqSVKdpimLGIJOgb5ZE",
+	})
+	id, _ := s.Encode([]uint64{1, 2, 3}) // "B4aajs"
 	numbers := s.Decode(id)              // [1, 2, 3]
 ```
 
@@ -86,9 +85,9 @@ Prevent specific words from appearing anywhere in the auto-generated IDs:
 [embedmd]:# (examples/sqids-blocklist/sqids-blocklist.go /.+sqids.New/ /\[1, 2, 3\]/)
 ```go
 	s, _ := sqids.New(sqids.Options{
-		Blocklist: []string{"word1", "word2"},
+		Blocklist: []string{"86Rf07"},
 	})
-	id, _ := s.Encode([]uint64{1, 2, 3}) // "8QRLaD"
+	id, _ := s.Encode([]uint64{1, 2, 3}) // "se8ojk"
 	numbers := s.Decode(id)              // [1, 2, 3]
 ```
 

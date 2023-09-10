@@ -2,18 +2,6 @@ package sqids
 
 import "testing"
 
-func TestMinValue(t *testing.T) {
-	if got, want := MinValue(), uint64(0); got != want {
-		t.Fatalf("MinValue() = %d, want %d", got, want)
-	}
-}
-
-func TestMaxValue(t *testing.T) {
-	if got, want := MaxValue(), uint64(18446744073709551615); got != want {
-		t.Fatalf("MaxValue() = %d, want %d", got, want)
-	}
-}
-
 func TestCalculateOffset(t *testing.T) {
 	for _, tt := range []struct {
 		alphabet string
@@ -37,7 +25,7 @@ func TestCalculateOffset(t *testing.T) {
 			t.Fatalf("unexpected error: %v", err)
 		}
 
-		if got := calculateOffset(tt.alphabet, tt.numbers); got != tt.want {
+		if got := calculateOffset(tt.alphabet, tt.numbers, 0); got != tt.want {
 			t.Fatalf("calculateOffset(%q, %#v) = %d, want %d", tt.alphabet, tt.numbers, got, tt.want)
 		}
 	}

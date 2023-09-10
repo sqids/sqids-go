@@ -17,7 +17,7 @@ func TestMultibyteAlphabet(t *testing.T) {
 
 func TestAlphabetSimple(t *testing.T) {
 	numbers := []uint64{1, 2, 3}
-	id := "4d9fd2"
+	id := "489158"
 
 	alphabet := "0123456789abcdef"
 	s, err := New(Options{
@@ -44,7 +44,7 @@ func TestAlphabetSimple(t *testing.T) {
 
 func TestAlphabetShort(t *testing.T) {
 	s, err := New(Options{
-		Alphabet: "abcde",
+		Alphabet: "abc",
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -94,7 +94,7 @@ func TestRepeatingAlphabetCharacters(t *testing.T) {
 
 func TestTooShortOfAnAlphabet(t *testing.T) {
 	if _, err := New(Options{
-		Alphabet: "abcd",
+		Alphabet: "ab",
 	}); err == nil {
 		t.Errorf("Should not accept too short of an alphabet")
 	}

@@ -4,14 +4,13 @@ package sqids
 
 import (
 	"errors"
-	"fmt"
 	"math"
 	"strings"
 )
 
 const (
 	defaultAlphabet   = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-	minAlphabetLength = 5
+	minAlphabetLength = 3
 	minUint64Value    = uint64(0)
 	maxUint64Value    = uint64(math.MaxUint64)
 )
@@ -20,23 +19,23 @@ var defaultBlocklist []string = newDefaultBlocklist()
 
 // Alphabet validation errors
 var (
-	errAlphabetMultibyte      = errors.New("alphabet must not contain any multibyte characters")
-	errAlphabetTooShort       = errors.New("alphabet length must be at least 5")
-	errAlphabetNotUniqueChars = errors.New("alphabet must contain unique characters")
-	errAlphabetMinLength      = errors.New("alphabet minimum length")
+	errAlphabetMultibyte       = errors.New("alphabet must not contain any multibyte characters")
+	errAlphabetTooShort        = errors.New("alphabet length must be at least 3")
+	errAlphabetNotUniqueChars  = errors.New("alphabet must contain unique characters")
+	errMaxRegenerationAttempts = errors.New("reached max attempts to re-generate the id")
 )
 
 // Options for a custom instance of Sqids
 type Options struct {
 	Alphabet  string
-	MinLength int
+	MinLength uint8
 	Blocklist []string
 }
 
 // Sqids lets you generate unique IDs from numbers
 type Sqids struct {
 	alphabet  string
-	minLength int
+	minLength uint8
 	blocklist []string
 }
 
@@ -82,11 +81,6 @@ func validatedOptions(o Options) (Options, error) {
 		return Options{}, errAlphabetNotUniqueChars
 	}
 
-	// test min length (type [might be lang-specific] + min length + max length)
-	if o.MinLength < int(minUint64Value) || o.MinLength > len(o.Alphabet) {
-		return Options{}, fmt.Errorf("%w has to be between %d and %d", errAlphabetMinLength, minUint64Value, len(o.Alphabet))
-	}
-
 	o.Blocklist = filterBlocklist(o.Alphabet, o.Blocklist)
 
 	return o, nil
@@ -99,70 +93,46 @@ func (s *Sqids) Encode(numbers []uint64) (string, error) {
 		return "", nil
 	}
 
-	return s.encodeNumbers(numbers, false)
+	return s.encodeNumbers(numbers, 0)
 }
 
-func (s *Sqids) encodeNumbers(numbers []uint64, partitioned bool) (string, error) {
+func (s *Sqids) encodeNumbers(numbers []uint64, increment int) (string, error) {
+	if increment > len(s.alphabet) {
+		return "", errMaxRegenerationAttempts
+	}
+
 	var (
-		err       error
-		offset    = calculateOffset(s.alphabet, numbers)
-		alphabet  = alphabetOffset(s.alphabet, offset)
-		prefix    = alphabet[0]
-		partition = alphabet[1]
-		ret       = []rune{prefix}
+		err      error
+		offset   = calculateOffset(s.alphabet, numbers, increment)
+		alphabet = alphabetOffset(s.alphabet, offset)
+		prefix   = alphabet[0]
+		ret      = []rune{prefix}
 	)
 
-	alphabet = alphabet[2:]
+	alphabet = reverseRunes(alphabet)
 
 	for i, num := range numbers {
-		alphabetWithoutSeparator := alphabet[:len(alphabet)-1]
-
-		ret = append(ret, []rune(toID(num, string(alphabetWithoutSeparator)))...)
+		ret = append(ret, []rune(toID(num, string(alphabet[1:])))...)
 
 		if i < len(numbers)-1 {
-			var separator rune
-
-			if partitioned && i == 0 {
-				separator = partition
-			} else {
-				separator = alphabet[len(alphabet)-1]
-			}
-
-			ret = append(ret, separator)
-
+			ret = append(ret, alphabet[0])
 			alphabet = []rune(shuffle(string(alphabet)))
 		}
 	}
 
 	id := string(ret)
 
-	if s.minLength > len(id) {
-		if !partitioned {
-			numbers = append([]uint64{0}, numbers...)
+	if int(s.minLength) > len(id) {
+		id += string(alphabet[0])
 
-			id, err = s.encodeNumbers(numbers, true)
-			if err != nil {
-				return "", err
-			}
-		}
-
-		if s.minLength > len(id) {
-			id = id[:1] + string(alphabet[:s.minLength-len(id)]) + id[1:]
+		for int(s.minLength)-len(id) > 0 {
+			alphabet = []rune(shuffle(string(alphabet)))
+			id += string(alphabet[:min(int(s.minLength)-len(id), len(alphabet))])
 		}
 	}
 
 	if s.isBlockedID(id) {
-		if partitioned {
-			if numbers[0] == maxUint64Value {
-				return "", errors.New("ran out of range checking against the blocklist")
-			}
-
-			numbers[0]++
-		} else {
-			numbers = append([]uint64{0}, numbers...)
-		}
-
-		id, err = s.encodeNumbers(numbers, true)
+		id, err = s.encodeNumbers(numbers, increment+1)
 		if err != nil {
 			return "", err
 		}
@@ -193,37 +163,20 @@ func (s *Sqids) Decode(id string) []uint64 {
 	offset := index(alphabet, prefix)
 
 	alphabet = alphabetOffset(s.alphabet, offset)
-
-	partition := alphabet[1]
+	alphabet = reverseRunes(alphabet)
 
 	rid = rid[1:]
-	alphabet = alphabet[2:]
-
-	if pi := index(rid, partition); pi > 0 && pi < len(rid)-1 {
-		rid = rid[pi+1:]
-		alphabet = shuffleRunes(alphabet)
-	}
 
 	for len(rid) > 0 {
-		separator := alphabet[len(alphabet)-1]
+		separator := alphabet[0]
 
 		chunks := splitChunks(rid, separator)
-
 		if len(chunks) > 0 {
-			alphabetWithoutSeparator := alphabet[:len(alphabet)-1]
-			charSet := make(map[rune]bool)
-
-			for _, c := range alphabetWithoutSeparator {
-				charSet[c] = true
+			if len(chunks[0]) == 0 {
+				return ret
 			}
 
-			for _, c := range chunks[0] {
-				if _, exists := charSet[c]; !exists {
-					return []uint64{}
-				}
-			}
-
-			ret = append(ret, toNumber(chunks[0], alphabetWithoutSeparator))
+			ret = append(ret, toNumber(chunks[0], alphabet[1:]))
 
 			if len(chunks) > 1 {
 				alphabet = shuffleRunes(alphabet)
@@ -262,25 +215,20 @@ func joinRuneSlices(rs [][]rune, separator rune) []rune {
 }
 
 func splitChunks(runes []rune, separator rune) [][]rune {
-	var n int
-
-	var out [][]rune
+	var chunks [][]rune
+	chunk := []rune{}
 
 	for _, r := range runes {
 		if r == separator {
-			n++
-		}
-
-		if len(out) == n {
-			out = append(out, []rune{})
-		}
-
-		if r != separator {
-			out[n] = append(out[n], r)
+			chunks = append(chunks, chunk)
+			chunk = []rune{}
+		} else {
+			chunk = append(chunk, r)
 		}
 	}
 
-	return out
+	chunks = append(chunks, chunk)
+	return chunks
 }
 
 func (s *Sqids) isBlockedID(id string) bool {
@@ -305,17 +253,7 @@ func (s *Sqids) isBlockedID(id string) bool {
 	return false
 }
 
-// MinValue returns the minimum uint64 value, which is 0
-func MinValue() uint64 {
-	return minUint64Value
-}
-
-// MaxValue returns the maximum uint64 value, which is 18446744073709551615
-func MaxValue() uint64 {
-	return maxUint64Value
-}
-
-func calculateOffset(alphabet string, numbers []uint64) int {
+func calculateOffset(alphabet string, numbers []uint64, increment int) int {
 	var (
 		offset = len(numbers)
 		runes  = []rune(alphabet)
@@ -330,7 +268,8 @@ func calculateOffset(alphabet string, numbers []uint64) int {
 		offset += int(runes[v%count]) + i
 	}
 
-	return offset % len(runes)
+	offset = offset % len(runes)
+	return (offset + increment) % len(runes)
 }
 
 func shuffle(alphabet string) string {
@@ -341,6 +280,14 @@ func shuffleRunes(runes []rune) []rune {
 	for i, j := 0, len(runes)-1; j > 0; i, j = i+1, j-1 {
 		r := (i*j + int(runes[i]) + int(runes[j])) % len(runes)
 		runes[i], runes[r] = runes[r], runes[i]
+	}
+
+	return runes
+}
+
+func reverseRunes(runes []rune) []rune {
+	for i, j := 0, len(runes)-1; i < j; i, j = i+1, j-1 {
+		runes[i], runes[j] = runes[j], runes[i]
 	}
 
 	return runes
@@ -420,4 +367,11 @@ func hasDigit(word string) bool {
 	}
 
 	return false
+}
+
+func min(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
 }

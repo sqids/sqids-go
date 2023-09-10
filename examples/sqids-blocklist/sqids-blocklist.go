@@ -8,9 +8,9 @@ import (
 
 func main() {
 	s, _ := sqids.New(sqids.Options{
-		Blocklist: []string{"word1", "word2"},
+		Blocklist: []string{"86Rf07"},
 	})
-	id, _ := s.Encode([]uint64{1, 2, 3}) // "8QRLaD"
+	id, _ := s.Encode([]uint64{1, 2, 3}) // "se8ojk"
 	numbers := s.Decode(id)              // [1, 2, 3]
 
 	fmt.Println(id, numbers)

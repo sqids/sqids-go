@@ -21,9 +21,9 @@ func TestBlocklist(t *testing.T) {
 }
 
 func TestBlocklistDefault(t *testing.T) {
-	numbers := []uint64{200044}
-	blockedID := "sexy"
-	unblockedID := "d171vI"
+	numbers := []uint64{4572721}
+	blockedID := "aho1e"
+	unblockedID := "JExTR"
 
 	s, err := New()
 	if err != nil {
@@ -45,8 +45,8 @@ func TestBlocklistDefault(t *testing.T) {
 }
 
 func TestBlocklistEmpty(t *testing.T) {
-	numbers := []uint64{200044}
-	id := "sexy"
+	numbers := []uint64{4572721}
+	id := "aho1e"
 
 	s, err := New(Options{
 		Blocklist: []string{},
@@ -70,12 +70,12 @@ func TestBlocklistEmpty(t *testing.T) {
 }
 
 func TestBlocklistNonEmpty(t *testing.T) {
-	numbers := []uint64{200044}
-	id := "sexy"
+	numbers := []uint64{4572721}
+	id := "aho1e"
 
 	s, err := New(Options{
 		Blocklist: []string{
-			"AvTg", // originally encoded [100000]
+			"ArUO", // originally encoded [100000]
 		},
 	})
 	if err != nil {
@@ -98,7 +98,7 @@ func TestBlocklistNonEmpty(t *testing.T) {
 	}
 
 	// make sure we are using the passed blocklist
-	decodedNumbers = s.Decode("AvTg")
+	decodedNumbers = s.Decode("ArUO")
 	if !reflect.DeepEqual([]uint64{100_000}, decodedNumbers) {
 		t.Errorf("Decoding `%v` should produce `%v`, but instead produced `%v`", id, []uint64{100_000}, decodedNumbers)
 	}
@@ -108,27 +108,27 @@ func TestBlocklistNonEmpty(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if generatedID != "7T1X8k" {
-		t.Errorf("Encoding `%v` should produce `%v`, but instead produced `%v`", []uint64{100_000}, "7T1X8k", generatedID)
+	if generatedID != "QyG4" {
+		t.Errorf("Encoding `%v` should produce `%v`, but instead produced `%v`", []uint64{100_000}, "QyG4", generatedID)
 	}
 
-	decodedNumbers = s.Decode("7T1X8k")
+	decodedNumbers = s.Decode("QyG4")
 	if !reflect.DeepEqual([]uint64{100_000}, decodedNumbers) {
 		t.Errorf("Decoding `%v` should produce `%v`, but instead produced `%v`", id, []uint64{100_000}, decodedNumbers)
 	}
 }
 
 func TestNewBlocklist(t *testing.T) {
-	numbers := []uint64{1, 2, 3}
-	id := "TM0x1Mxz"
+	numbers := []uint64{1000000, 2000000}
+	id := "1aYeB7bRUt"
 
 	s, err := New(Options{
 		Blocklist: []string{
-			"8QRLaD",   // normal result of 1st encoding, let's block that word on purpose
-			"7T1cd0dL", // result of 2nd encoding
-			"UeIe",     // result of 3rd encoding is `RA8UeIe7`, let's block a substring
-			"imhw",     // result of 4th encoding is `WM3Limhw`, let's block the postfix
-			"LfUQ",     // result of 4th encoding is `LfUQh4HN`, let's block the prefix
+			"JSwXFaosAN", // normal result of 1st encoding, let's block that word on purpose
+			"OCjV9JK64o", // result of 2nd encoding
+			"rBHf",       // result of 3rd encoding is `4rBHfOiqd3`, let's block a substring
+			"79SM",       // result of 4th encoding is `dyhgw479SM`, let's block the postfix
+			"7tE6",       // result of 4th encoding is `7tE6jdAHLe`, let's block the prefix
 		},
 	})
 	if err != nil {
@@ -152,7 +152,7 @@ func TestNewBlocklist(t *testing.T) {
 
 func TestDecodingBlocklistedIDs(t *testing.T) {
 	numbers := []uint64{1, 2, 3}
-	blocklist := []string{"8QRLaD", "7T1cd0dL", "RA8UeIe7", "WM3Limhw", "LfUQh4HN"}
+	blocklist := []string{"86Rf07", "se8ojk", "ARsz1p", "Q8AI49", "5sQRZO"}
 
 	s, err := New(Options{
 		Blocklist: blocklist,
@@ -173,7 +173,7 @@ func TestShortBlocklistMatch(t *testing.T) {
 	numbers := []uint64{1_000}
 
 	s, err := New(Options{
-		Blocklist: []string{"pPQ"},
+		Blocklist: []string{"pnd"},
 	})
 
 	if err != nil {
@@ -193,11 +193,11 @@ func TestShortBlocklistMatch(t *testing.T) {
 
 func TestUpperCaseAlphabetBlocklistFiltering(t *testing.T) {
 	numbers := []uint64{1, 2, 3}
-	id := "ULPBZGBM"
+	id := "IBSHOZ"
 
 	s, err := New(Options{
 		Alphabet:  "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
-		Blocklist: []string{"sqnmpn"}, // lowercase blocklist in only-uppercase alphabet
+		Blocklist: []string{"sxnzkl"}, // lowercase blocklist in only-uppercase alphabet
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -210,13 +210,36 @@ func TestUpperCaseAlphabetBlocklistFiltering(t *testing.T) {
 
 	decodedNumbers := s.Decode(id)
 
-	// without blocklist, would've been "SQNMPN"
+	// without blocklist, would've been "SXNZKL"
 	if id != generatedID {
 		t.Errorf("Encoding `%v` should produce `%v`, but instead produced `%v`", numbers, id, generatedID)
 	}
 
 	if !reflect.DeepEqual(numbers, decodedNumbers) {
 		t.Errorf("Decoding `%v` should produce `%v`, but instead produced `%v`", generatedID, numbers, decodedNumbers)
+	}
+}
+
+func TestMaxEncodingAttempts(t *testing.T) {
+	alphabet := "abc"
+	minLength := uint8(3)
+	blocklist := []string{"cab", "abc", "bca"}
+
+	s, err := New(Options{
+		Alphabet:  alphabet,
+		MinLength: minLength,
+		Blocklist: blocklist,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(alphabet) != int(minLength) || len(blocklist) != int(minLength) {
+		t.Errorf("`TestMaxEncodingAttempts` is not setup properly")
+	}
+
+	if _, err := s.Encode([]uint64{0}); err == nil {
+		t.Errorf("Should throw error about max regeneration attempts")
 	}
 }
 

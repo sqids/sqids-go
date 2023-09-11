@@ -4,15 +4,12 @@ package sqids
 
 import (
 	"errors"
-	"math"
 	"strings"
 )
 
 const (
 	defaultAlphabet   = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 	minAlphabetLength = 3
-	minUint64Value    = uint64(0)
-	maxUint64Value    = uint64(math.MaxUint64)
 )
 
 var defaultBlocklist []string = newDefaultBlocklist()

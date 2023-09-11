@@ -1,8 +1,14 @@
 package sqids
 
 import (
+	"math"
 	"reflect"
 	"testing"
+)
+
+const (
+	minUint64Value = uint64(0)
+	maxUint64Value = uint64(math.MaxUint64)
 )
 
 func BenchmarkEncodeDecode(b *testing.B) {
